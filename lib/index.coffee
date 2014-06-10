@@ -48,7 +48,7 @@ module.exports = (options, parentApp) ->
 				app.set "views", path.join(PROJECT_DIR, options.viewPath, controllerName)
 			for key of controller
 				continue if key[0] is "$" #内部使用的方法以$开头
-				methodInfo = getMethodInfo key
+				methodInfo = resolveMethod key
 				if $mvcConfig and $mvcConfig.route and $mvcConfig.route[methodInfo.action]
 					individualConfig = $mvcConfig.route[methodInfo.action]
 					httpVerbs = individualConfig.httpVerbs or methodInfo.httpVerbs #配置在mvcConfig中的有更高的优先级，且只取一个，不取并集或交集
@@ -86,29 +86,30 @@ module.exports = (options, parentApp) ->
 
 ###
 配置路由
-@param app
-@param method
-@param path
-@param func
+@param app application
+@param {String} method http request method
+@param {String} path route path
+@param {Function} func function
 ###
 configRoute = (app, method, path, func) ->
 	app[method] path, func
 
 ###
-获取方法支持的HTTP方法和中间件信息
+通过解析方法名获取方法支持的HTTP方法和中间件信息
+@param {String} methodName method name
 ###
-getMethodInfo = (methodName) ->
-	arr = methodName.split("_")
+resolveMethod = (methodName) ->
+	arr = methodName.split "_"
+
 	httpVerbs = []
 	middleware = []
 	arr.slice(1).forEach (item) ->
 		if item[0] is "$"
-			middleware.push item
+			middleware.push item #middle ware is start with `$`
 		else
 			httpVerbs.push item.toLowerCase() #http方法转换为小写
-		return
 
-	httpVerbs.push "get"  if httpVerbs.length <= 0
+	httpVerbs.push "get" if httpVerbs.length <= 0
 	action: arr[0]
 	httpVerbs: httpVerbs
 	middleware: middleware
