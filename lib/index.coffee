@@ -1,6 +1,6 @@
 ###
-	Created by massimo on 2014/4/12.
-	express-mvc framework
+Created by massimo on 2014/4/12.
+express-mvc framework
 ###
 
 fs = require "fs"
@@ -9,42 +9,43 @@ path = require "path"
 cons = require "consolidate"
 
 ###
-	配置路由
-	@param options
-    @param {String} [options.controllerPath="controller"] controller path
-    @pram {String} [options.viewPath="views"] views path
-    @param parent app
+配置路由
+@param options
+@param {String} [options.controllerPath="controller"] controller path
+@pram {String} [options.viewPath="views"] views path
+@param parentApp app
 ###
-module.exports = (options, parent) ->
-	PROJECT_DIR = path.join __dirname, "../../"
-	controllerPath = undefined
-	viewPath = undefined
-	filter = undefined
-	if parent is `undefined`
-		parent = options
-		controllerPath = "controllers"
-		viewPath = "views"
-		filterPath = path.join PROJECT_DIR, "filter.js"
-		if fs.existsSync(filterPath)
-			filter = require(filterPath)
+module.exports = (options, parentApp) ->
+	unless parentApp
+		parentApp = options
+		options = {}
+
+	setDefault options,
+		controllerPath: "controllers"
+		viewPath: "views"
+
+	PROJECT_DIR = path.join(__dirname, "../")
+
+	unless options.filter
+		defaultFilterPath = path.join(PROJECT_DIR, "filter.js")
+		if fs.existsSync defaultFilterPath
+			filter = require defaultFilterPath
 		else
 			filter = {}
-	else
-		controllerPath = options.controllerPath
-		viewPath = options.viewPath
-		filter = options.filter or {}
-	fs.readdirSync(path.join(PROJECT_DIR, controllerPath)).forEach (name) ->
-		if name.indexOf(".js") isnt -1
-			controllerName = name.replace ".js", "" #去掉后缀名
-			controller = require path.join PROJECT_DIR, controllerPath, controllerName
+
+	fs.readdirSync(path.join(PROJECT_DIR, options.controllerPath)).forEach (fileName) ->
+		if fileName.slice(-3) is ".js"
+			controllerName = fileName.slice 0, -3 #去掉后缀名
+			controller = require path.join PROJECT_DIR, options.controllerPath, controllerName
 			$mvcConfig = controller.$mvcConfig
 			app = express()
 			engine = "swig"
 			engine = $mvcConfig.engine if typeof $mvcConfig isnt "undefined" and $mvcConfig.engine
-			if viewPath
+			viewEngine = ($mvcConfig.viewEngine if typeof $mvcConfig isnt "undefined" and $mvcConfig.viewEngine) or "html"
+			if options.viewPath
 				app.engine "html", cons[engine]
-				app.set "view engine", "html"
-				app.set "views", path.join(PROJECT_DIR, viewPath, controllerName)
+				app.set "view engine", viewEngine
+				app.set "views", path.join(PROJECT_DIR, options.viewPath, controllerName)
 			for key of controller
 				continue if key[0] is "$" #内部使用的方法以$开头
 				methodInfo = getMethodInfo key
@@ -57,6 +58,7 @@ module.exports = (options, parent) ->
 						httpVerbs: httpVerbs
 						middleware: middleware
 						path: individualConfig.path
+
 				methodInfo.path = methodInfo.path or "/#{controllerName}/#{methodInfo.action}" unless methodInfo.path
 
 				if methodInfo.middleware
@@ -80,7 +82,7 @@ module.exports = (options, parent) ->
 					configRoute app, itemMethod, "/#{controllerName}", controller[key] if methodInfo.action is "index"
 					configRoute app, itemMethod, methodInfo.path, controller[key]
 					j++
-			parent.use app
+			parentApp.use app
 
 ###
 配置路由
@@ -110,3 +112,10 @@ getMethodInfo = (methodName) ->
 	action: arr[0]
 	httpVerbs: httpVerbs
 	middleware: middleware
+
+###
+    set default options
+###
+setDefault = (options, defaultOptions)->
+	for key,value of defaultOptions
+		options[key] = value unless options[key]
