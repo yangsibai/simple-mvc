@@ -8,6 +8,8 @@ express = require "express"
 path = require "path"
 cons = require "consolidate"
 
+PROJECT_DIR = path.join(__dirname, "../")
+
 ###
 配置路由
 @param options
@@ -20,11 +22,9 @@ module.exports = (options, parentApp) ->
 		parentApp = options
 		options = {}
 
-	setDefault options,
+	setOptions options,
 		controllerPath: "controllers"
 		viewPath: "views"
-
-	PROJECT_DIR = path.join(__dirname, "../")
 
 	unless options.filter
 		defaultFilterPath = path.join(PROJECT_DIR, "filter.js")
@@ -34,54 +34,46 @@ module.exports = (options, parentApp) ->
 			filter = {}
 
 	fs.readdirSync(path.join(PROJECT_DIR, options.controllerPath)).forEach (fileName) ->
-		if fileName.slice(-3) is ".js"
+		if fileName.slice(-3) is ".js" # file extension is `.js`
 			controllerName = fileName.slice 0, -3 #去掉后缀名
-			controller = require path.join PROJECT_DIR, options.controllerPath, controllerName
-			$mvcConfig = controller.$mvcConfig
+			controller = require(path.join(PROJECT_DIR, options.controllerPath, controllerName))
+
 			app = express()
-			engine = "swig"
-			engine = $mvcConfig.engine if typeof $mvcConfig isnt "undefined" and $mvcConfig.engine
-			viewEngine = ($mvcConfig.viewEngine if typeof $mvcConfig isnt "undefined" and $mvcConfig.viewEngine) or "html"
+
+			$mvcConfig = controller.$mvcConfig
+
 			if options.viewPath
+				engine = "swig"
+				engine = $mvcConfig.engine if typeof $mvcConfig isnt "undefined" and $mvcConfig.engine
+				viewEngine = ($mvcConfig.viewEngine if typeof $mvcConfig isnt "undefined" and $mvcConfig.viewEngine) or "html"
 				app.engine "html", cons[engine]
 				app.set "view engine", viewEngine
 				app.set "views", path.join(PROJECT_DIR, options.viewPath, controllerName)
-			for key of controller
-				continue if key[0] is "$" #内部使用的方法以$开头
-				methodInfo = resolveMethod key
-				if $mvcConfig and $mvcConfig.route and $mvcConfig.route[methodInfo.action]
-					individualConfig = $mvcConfig.route[methodInfo.action]
-					httpVerbs = individualConfig.httpVerbs or methodInfo.httpVerbs #配置在mvcConfig中的有更高的优先级，且只取一个，不取并集或交集
-					middleware = individualConfig.middleware or methodInfo.middleware #配置在mvcConfig中的中间件有更高的优先级，只取一个位置的
-					methodInfo =
-						action: methodInfo.action
-						httpVerbs: httpVerbs
-						middleware: middleware
-						path: individualConfig.path
 
-				methodInfo.path = methodInfo.path or "/#{controllerName}/#{methodInfo.action}" unless methodInfo.path
+			for methodName,method of controller
+				continue if methodName[0] is "$" #内部使用的方法以$开头
+
+				methodInfo = resolveMethod methodName
+
+				setOptions methodInfo, $mvcConfig?.route?[methodInfo.action], true
+
+				methodInfo.path = "/#{controllerName}/#{methodInfo.action}" unless methodInfo.path
 
 				if methodInfo.middleware
-					i = 0
-
-					while i < methodInfo.middleware.length
-						itemMiddleware = methodInfo.middleware[i]
+					for itemMiddleware in methodInfo.middleware
 						func = controller[itemMiddleware] or filter[itemMiddleware]
-						if func and typeof func is "function"
+						if typeof func is "function"
 							configRoute app, "all", "/", func  if controllerName is "home"
 							configRoute app, "all", "/" + controllerName, func  if methodInfo.action is "index"
 							configRoute app, "all", methodInfo.path, func
 						else
-							console.log "can not find filter", itemMiddleware
-						i++
-				j = 0
+							throw new Error "can not find filter", itemMiddleware
 
-				while j < methodInfo.httpVerbs.length
-					itemMethod = methodInfo.httpVerbs[j]
-					configRoute app, itemMethod, "/", controller[key] if controllerName is "home"
-					configRoute app, itemMethod, "/#{controllerName}", controller[key] if methodInfo.action is "index"
-					configRoute app, itemMethod, methodInfo.path, controller[key]
-					j++
+				for itemMethod in methodInfo.httpVerbs
+					configRoute app, itemMethod, "/", method if controllerName is "home"
+					configRoute app, itemMethod, "/#{controllerName}", method if methodInfo.action is "index"
+					configRoute app, itemMethod, methodInfo.path, method
+
 			parentApp.use app
 
 ###
@@ -116,7 +108,16 @@ resolveMethod = (methodName) ->
 
 ###
     set default options
+    @param {Boolean} override override options by defaultOptions or not
 ###
-setDefault = (options, defaultOptions)->
-	for key,value of defaultOptions
-		options[key] = value unless options[key]
+setOptions = (options, defaultOptions, override)->
+	unless defaultOptions
+		return
+	unless options
+		options = defaultOptions
+	else
+		for key,value of defaultOptions
+			if override
+				options[key] = value if defaultOptions[key]
+			else
+				options[key] = value unless options[key]
