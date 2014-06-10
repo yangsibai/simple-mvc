@@ -99,12 +99,26 @@ resolveMethod = (methodName) ->
 		if item[0] is "$"
 			middleware.push item #middle ware is start with `$`
 		else
-			httpVerbs.push item.toLowerCase() #http方法转换为小写
+			if validHttpMethod(item) then httpVerbs.push item.toLowerCase() else throw new Exception("not support method:#{item}")
 
 	httpVerbs.push "get" if httpVerbs.length <= 0
 	action: arr[0]
 	httpVerbs: httpVerbs
 	middleware: middleware
+
+###
+    detect if a method is a valid http method
+###
+validHttpMethod = (method)->
+	method.toLowerCase() in [
+		"get",
+		"post",
+		"options",
+		"delete",
+		"put",
+		"head",
+		"trace"
+	]
 
 ###
     set default options
