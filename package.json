@@ -1,15 +1,15 @@
 {
     "name": "simple-mvc",
     "description": "a simple mvc framework based on express",
-    "version": "0.0.2",
+    "version": "0.0.5",
     "author": {
         "name": "massimo",
         "email": "yangsibai@gmail.com"
     },
-    "main": "app.js",
+    "main": "lib/index.js",
     "repository": {
         "type": "git",
-        "url": "https://github.com/yangsibai/express-mvc.git"
+        "url": "https://github.com/yangsibai/simple-mvc.git"
     },
     "keywords": [
         "express",
@@ -24,7 +24,7 @@
     ],
     "license": "GPL",
     "bugs": {
-        "url": "https://github.com/yangsibai/express-mvc/issues"
+        "url": "https://github.com/yangsibai/simple-mvc/issues"
     },
     "dependencies": {
         "express": "3.4.7",
