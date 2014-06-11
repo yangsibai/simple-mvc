@@ -16,7 +16,7 @@ express-mvc framework
 
   cons = require("consolidate");
 
-  PROJECT_DIR = path.join(__dirname, "../");
+  PROJECT_DIR = path.join(__dirname, "../../");
 
 
   /*
@@ -28,36 +28,38 @@ express-mvc framework
    */
 
   module.exports = function(options, parentApp) {
-    var defaultFilterPath, filter;
+    var defaultFilterPath;
     if (!parentApp) {
       parentApp = options;
       options = {};
     }
     setOptions(options, {
       controllerPath: "controllers",
-      viewPath: "views"
+      viewPath: "views",
+      defaultEngine: "swig",
+      defaultViewEngine: "html"
     });
     if (!options.filter) {
       defaultFilterPath = path.join(PROJECT_DIR, "filter.js");
       if (fs.existsSync(defaultFilterPath)) {
-        filter = require(defaultFilterPath);
+        options.filter = require(defaultFilterPath);
       } else {
-        filter = {};
+        options.filter = {};
       }
     }
     return fs.readdirSync(path.join(PROJECT_DIR, options.controllerPath)).forEach(function(fileName) {
-      var $mvcConfig, app, controller, controllerName, engine, func, itemMethod, itemMiddleware, method, methodInfo, methodName, viewEngine, _i, _j, _len, _len1, _ref, _ref1, _ref2;
+      var $mvcConfig, app, controller, controllerName, engine, func, itemMethod, itemMiddleware, method, methodInfo, methodName, pathOverrideByConfig, viewEngine, _i, _j, _len, _len1, _ref, _ref1, _ref2, _ref3, _ref4;
       if (fileName.slice(-3) === ".js") {
         controllerName = fileName.slice(0, -3);
         controller = require(path.join(PROJECT_DIR, options.controllerPath, controllerName));
         app = express();
         $mvcConfig = controller.$mvcConfig;
         if (options.viewPath) {
-          engine = "swig";
+          engine = options.defaultEngine;
           if (typeof $mvcConfig !== "undefined" && $mvcConfig.engine) {
             engine = $mvcConfig.engine;
           }
-          viewEngine = (typeof $mvcConfig !== "undefined" && $mvcConfig.viewEngine ? $mvcConfig.viewEngine : void 0) || "html";
+          viewEngine = (typeof $mvcConfig !== "undefined" && $mvcConfig.viewEngine ? $mvcConfig.viewEngine : void 0) || options.defaultViewEngine;
           app.engine("html", cons[engine]);
           app.set("view engine", viewEngine);
           app.set("views", path.join(PROJECT_DIR, options.viewPath, controllerName));
@@ -69,14 +71,17 @@ express-mvc framework
           }
           methodInfo = resolveMethod(methodName);
           setOptions(methodInfo, $mvcConfig != null ? (_ref = $mvcConfig.route) != null ? _ref[methodInfo.action] : void 0 : void 0, true);
+          if ($mvcConfig != null ? (_ref1 = $mvcConfig.route) != null ? (_ref2 = _ref1[methodInfo.action]) != null ? _ref2.path : void 0 : void 0 : void 0) {
+            pathOverrideByConfig = true;
+          }
           if (!methodInfo.path) {
             methodInfo.path = "/" + controllerName + "/" + methodInfo.action;
           }
           if (methodInfo.middleware) {
-            _ref1 = methodInfo.middleware;
-            for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
-              itemMiddleware = _ref1[_i];
-              func = controller[itemMiddleware] || filter[itemMiddleware];
+            _ref3 = methodInfo.middleware;
+            for (_i = 0, _len = _ref3.length; _i < _len; _i++) {
+              itemMiddleware = _ref3[_i];
+              func = controller[itemMiddleware] || options.filter[itemMiddleware];
               if (typeof func === "function") {
                 if (controllerName === "home") {
                   configRoute(app, "all", "/", func);
@@ -90,14 +95,16 @@ express-mvc framework
               }
             }
           }
-          _ref2 = methodInfo.httpVerbs;
-          for (_j = 0, _len1 = _ref2.length; _j < _len1; _j++) {
-            itemMethod = _ref2[_j];
-            if (controllerName === "home") {
-              configRoute(app, itemMethod, "/", method);
-            }
-            if (methodInfo.action === "index") {
-              configRoute(app, itemMethod, "/" + controllerName, method);
+          _ref4 = methodInfo.httpVerbs;
+          for (_j = 0, _len1 = _ref4.length; _j < _len1; _j++) {
+            itemMethod = _ref4[_j];
+            if (!pathOverrideByConfig) {
+              if (controllerName === "home") {
+                configRoute(app, itemMethod, "/", method);
+              }
+              if (methodInfo.action === "index") {
+                configRoute(app, itemMethod, "/" + controllerName, method);
+              }
             }
             configRoute(app, itemMethod, methodInfo.path, method);
           }
@@ -199,4 +206,4 @@ express-mvc framework
 
 }).call(this);
 
-//# sourceMappingURL=index.map
+//# sourceMappingURL=lib.map

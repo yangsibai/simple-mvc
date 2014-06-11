@@ -8,7 +8,7 @@ express = require "express"
 path = require "path"
 cons = require "consolidate"
 
-PROJECT_DIR = path.join(__dirname, "../")
+PROJECT_DIR = path.join(__dirname, "../../")
 
 ###
 配置路由
@@ -25,13 +25,15 @@ module.exports = (options, parentApp) ->
 	setOptions options,
 		controllerPath: "controllers"
 		viewPath: "views"
+		defaultEngine: "swig"
+		defaultViewEngine: "html"
 
 	unless options.filter
 		defaultFilterPath = path.join(PROJECT_DIR, "filter.js")
 		if fs.existsSync defaultFilterPath
-			filter = require defaultFilterPath
+			options.filter = require defaultFilterPath
 		else
-			filter = {}
+			options.filter = {}
 
 	fs.readdirSync(path.join(PROJECT_DIR, options.controllerPath)).forEach (fileName) ->
 		if fileName.slice(-3) is ".js" # file extension is `.js`
@@ -43,9 +45,9 @@ module.exports = (options, parentApp) ->
 			$mvcConfig = controller.$mvcConfig
 
 			if options.viewPath
-				engine = "swig"
+				engine = options.defaultEngine
 				engine = $mvcConfig.engine if typeof $mvcConfig isnt "undefined" and $mvcConfig.engine
-				viewEngine = ($mvcConfig.viewEngine if typeof $mvcConfig isnt "undefined" and $mvcConfig.viewEngine) or "html"
+				viewEngine = ($mvcConfig.viewEngine if typeof $mvcConfig isnt "undefined" and $mvcConfig.viewEngine) or options.defaultViewEngine
 				app.engine "html", cons[engine]
 				app.set "view engine", viewEngine
 				app.set "views", path.join(PROJECT_DIR, options.viewPath, controllerName)
@@ -56,12 +58,12 @@ module.exports = (options, parentApp) ->
 				methodInfo = resolveMethod methodName
 
 				setOptions methodInfo, $mvcConfig?.route?[methodInfo.action], true
-
+				pathOverrideByConfig = true if $mvcConfig?.route?[methodInfo.action]?.path
 				methodInfo.path = "/#{controllerName}/#{methodInfo.action}" unless methodInfo.path
 
 				if methodInfo.middleware
 					for itemMiddleware in methodInfo.middleware
-						func = controller[itemMiddleware] or filter[itemMiddleware]
+						func = controller[itemMiddleware] or options.filter[itemMiddleware]
 						if typeof func is "function"
 							configRoute app, "all", "/", func  if controllerName is "home"
 							configRoute app, "all", "/" + controllerName, func  if methodInfo.action is "index"
@@ -70,8 +72,9 @@ module.exports = (options, parentApp) ->
 							throw new Error "can not find filter", itemMiddleware
 
 				for itemMethod in methodInfo.httpVerbs
-					configRoute app, itemMethod, "/", method if controllerName is "home"
-					configRoute app, itemMethod, "/#{controllerName}", method if methodInfo.action is "index"
+					unless pathOverrideByConfig
+						configRoute app, itemMethod, "/", method if controllerName is "home"
+						configRoute app, itemMethod, "/#{controllerName}", method if methodInfo.action is "index"
 					configRoute app, itemMethod, methodInfo.path, method
 
 			parentApp.use app

@@ -14,7 +14,7 @@ app.use express.urlencoded()
 app.use express.methodOverride()
 app.use app.router
 
-require('./lib/index')(app)
+require('../lib')(app)
 
 http.createServer(app).listen app.get("port"), ->
 	console.log "Express server listening on port " + app.get("port")

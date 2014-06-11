@@ -1,12 +1,12 @@
 {
     "name": "simple-mvc",
     "description": "a simple mvc framework based on express",
-    "version": "0.0.5",
+    "version": "0.0.9",
     "author": {
         "name": "massimo",
         "email": "yangsibai@gmail.com"
     },
-    "main": "lib/index.js",
+    "main": "lib.js",
     "repository": {
         "type": "git",
         "url": "https://github.com/yangsibai/simple-mvc.git"
