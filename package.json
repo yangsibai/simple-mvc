@@ -1,15 +1,12 @@
 {
-    "name": "express-mvc",
+    "name": "simple-mvc",
     "description": "a simple mvc framework based on express",
     "version": "0.0.2",
     "author": {
         "name": "massimo",
         "email": "yangsibai@gmail.com"
     },
-    "main": "index.js",
-    "scripts": {
-        "test": "echo \"Error: no test specified\" && exit 1"
-    },
+    "main": "app.js",
     "repository": {
         "type": "git",
         "url": "https://github.com/yangsibai/express-mvc.git"
