@@ -94,10 +94,7 @@ You can't omit `POST`.
         });
     };
 
-##Advanced
-
-###filter
-
+##Filter
 `$` in function represent filter,default filter should place in `appRootDirectory/filter.js`.For example:
 
 *appRootDirectory/filter.js:*
@@ -120,6 +117,22 @@ You can't omit `POST`.
             user:user
         });
     };
+
+##Advanced
+###Coustom config
+
+Below is default simple-mvc config,you can custom it easily:
+
+*appRootDirectory/app.js:*
+    
+    var app=express();
+    require("simple-mvc")({
+        controllerPath: "controllers",
+        viewPath: "views",
+        defaultEngine: "swig",
+        defaultViewEngine: "html",
+        filter:require("filter.js")
+    },app);
 
 ###Custom route
 
