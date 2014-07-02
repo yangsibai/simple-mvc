@@ -37,7 +37,7 @@ simple-mvc is a light mvc framework based on express.
         });
     };
 
-`GET` represent http method is get,this is the default value,you can omit it:
+`GET` represent http method is get,this is the default method,you can omit it:
 
     exports.user=function(req,res){
         var user={
