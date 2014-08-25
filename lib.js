@@ -145,7 +145,7 @@ express-mvc framework
         if (validHttpMethod(item)) {
           return httpVerbs.push(item.toLowerCase());
         } else {
-          throw new Exception("not support method:" + item);
+          throw new Error("not support method:" + item);
         }
       }
     });

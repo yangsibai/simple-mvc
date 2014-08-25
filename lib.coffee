@@ -102,7 +102,7 @@ resolveMethod = (methodName) ->
 		if item[0] is "$"
 			middleware.push item #middle ware is start with `$`
 		else
-			if validHttpMethod(item) then httpVerbs.push item.toLowerCase() else throw new Exception("not support method:#{item}")
+			if validHttpMethod(item) then httpVerbs.push item.toLowerCase() else throw new Error("not support method:#{item}")
 
 	httpVerbs.push "get" if httpVerbs.length <= 0
 	action: arr[0]
