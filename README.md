@@ -1,12 +1,17 @@
 ##simple-mvc
+
 simple-mvc is a light mvc framework based on express.
 
+[![NPM](https://nodei.co/npm/simple-mvc.png?downloads=true&downloadRank=true&stars=true)](https://nodei.co/npm/simple-mvc/)
+
 ##Install
+
 `npm install simple-mvc`
 
 ##Useage
 
 ###config
+
 1. app=express()
 2. require('simple-mvc')(app)
 3. done!
