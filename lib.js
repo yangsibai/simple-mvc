@@ -92,7 +92,7 @@ express-mvc framework
         pathOverrideByConfig = true;
       }
       if (!methodInfo.path) {
-        methodInfo.path = "/" + controllerName + "/" + methodInfo.action;
+        methodInfo.path = ("/" + controllerName + "/" + methodInfo.action).replace("\\", "/");
       }
       if (methodInfo.middleware) {
         _ref3 = methodInfo.middleware;

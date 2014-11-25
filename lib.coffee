@@ -69,7 +69,7 @@ configureFile = (options, parentApp, controllerName)->
 
         setOptions methodInfo, $mvcConfig?.route?[methodInfo.action], true
         pathOverrideByConfig = true if $mvcConfig?.route?[methodInfo.action]?.path
-        methodInfo.path = "/#{controllerName}/#{methodInfo.action}" unless methodInfo.path
+        methodInfo.path = "/#{controllerName}/#{methodInfo.action}".replace("\\", "/") unless methodInfo.path
 
         if methodInfo.middleware
             for itemMiddleware in methodInfo.middleware
