@@ -12,7 +12,10 @@ app.use express.urlencoded()
 app.use express.methodOverride()
 app.use app.router
 
-require('../lib')(app)
+require('simple-mvc')(app)
+
+app.use "/api", (err, req, res, next)->
+	res.send "错误"
 
 http.createServer(app).listen app.get("port"), ->
 	console.log "Express server listening on port " + app.get("port")

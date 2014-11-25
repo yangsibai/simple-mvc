@@ -24,7 +24,11 @@
 
   app.use(app.router);
 
-  require('../lib')(app);
+  require('simple-mvc')(app);
+
+  app.use("/api", function(err, req, res, next) {
+    return res.send("错误");
+  });
 
   http.createServer(app).listen(app.get("port"), function() {
     console.log("Express server listening on port " + app.get("port"));

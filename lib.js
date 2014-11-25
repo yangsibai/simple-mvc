@@ -6,7 +6,7 @@ express-mvc framework
  */
 
 (function() {
-  var PROJECT_DIR, configRoute, cons, express, fs, path, resolveMethod, setOptions, validHttpMethod;
+  var PROJECT_DIR, configRoute, configureDir, configureFile, cons, express, fs, path, resolveMethod, setOptions, validHttpMethod;
 
   fs = require("fs");
 
@@ -20,15 +20,16 @@ express-mvc framework
 
 
   /*
-  配置路由
-  @param options
-  @param {String} [options.controllerPath="controller"] controller path
-  @pram {String} [options.viewPath="views"] views path
-  @param parentApp app
+      配置路由
+      @param options
+      @param {String} [options.controllerPath="controller"] controller path
+      @pram {String} [options.viewPath="views"] views path
+      @param {Object} [options.filter=null] filter
+      @param parentApp app
    */
 
   module.exports = function(options, parentApp) {
-    var defaultFilterPath;
+    var defaultFilterPath, dir;
     if (!parentApp) {
       parentApp = options;
       options = {};
@@ -47,71 +48,85 @@ express-mvc framework
         options.filter = {};
       }
     }
-    return fs.readdirSync(path.join(PROJECT_DIR, options.controllerPath)).forEach(function(fileName) {
-      var $mvcConfig, app, controller, controllerName, engine, func, itemMethod, itemMiddleware, method, methodInfo, methodName, pathOverrideByConfig, viewEngine, _i, _j, _len, _len1, _ref, _ref1, _ref2, _ref3, _ref4;
-      if (fileName.slice(-3) === ".js") {
-        controllerName = fileName.slice(0, -3);
-        controller = require(path.join(PROJECT_DIR, options.controllerPath, controllerName));
-        app = express();
-        $mvcConfig = controller.$mvcConfig;
-        if (options.viewPath) {
-          engine = options.defaultEngine;
-          if (typeof $mvcConfig !== "undefined" && $mvcConfig.engine) {
-            engine = $mvcConfig.engine;
-          }
-          viewEngine = (typeof $mvcConfig !== "undefined" && $mvcConfig.viewEngine ? $mvcConfig.viewEngine : void 0) || options.defaultViewEngine;
-          app.engine("html", cons[engine]);
-          app.set("view engine", viewEngine);
-          app.set("views", path.join(PROJECT_DIR, options.viewPath, controllerName));
-        }
-        for (methodName in controller) {
-          method = controller[methodName];
-          if (methodName[0] === "$") {
-            continue;
-          }
-          methodInfo = resolveMethod(methodName);
-          setOptions(methodInfo, $mvcConfig != null ? (_ref = $mvcConfig.route) != null ? _ref[methodInfo.action] : void 0 : void 0, true);
-          if ($mvcConfig != null ? (_ref1 = $mvcConfig.route) != null ? (_ref2 = _ref1[methodInfo.action]) != null ? _ref2.path : void 0 : void 0 : void 0) {
-            pathOverrideByConfig = true;
-          }
-          if (!methodInfo.path) {
-            methodInfo.path = "/" + controllerName + "/" + methodInfo.action;
-          }
-          if (methodInfo.middleware) {
-            _ref3 = methodInfo.middleware;
-            for (_i = 0, _len = _ref3.length; _i < _len; _i++) {
-              itemMiddleware = _ref3[_i];
-              func = controller[itemMiddleware] || options.filter[itemMiddleware];
-              if (typeof func === "function") {
-                if (controllerName === "home") {
-                  configRoute(app, "all", "/", func);
-                }
-                if (methodInfo.action === "index") {
-                  configRoute(app, "all", "/" + controllerName, func);
-                }
-                configRoute(app, "all", methodInfo.path, func);
-              } else {
-                throw new Error("can not find filter", itemMiddleware);
-              }
-            }
-          }
-          _ref4 = methodInfo.httpVerbs;
-          for (_j = 0, _len1 = _ref4.length; _j < _len1; _j++) {
-            itemMethod = _ref4[_j];
-            if (!pathOverrideByConfig) {
-              if (controllerName === "home") {
-                configRoute(app, itemMethod, "/", method);
-              }
-              if (methodInfo.action === "index") {
-                configRoute(app, itemMethod, "/" + controllerName, method);
-              }
-            }
-            configRoute(app, itemMethod, methodInfo.path, method);
-          }
-        }
-        return parentApp.use(app);
+    dir = path.join(PROJECT_DIR, options.controllerPath);
+    return configureDir(options, dir, parentApp);
+  };
+
+  configureDir = function(options, dirName, parentApp, parentDir) {
+    return fs.readdirSync(dirName).forEach(function(fileName) {
+      var controllerName, filePath;
+      filePath = path.join(dirName, fileName);
+      parentDir = parentDir || "";
+      if (fs.lstatSync(filePath).isDirectory()) {
+        return configureDir(options, filePath, parentApp, path.join(parentDir, fileName));
+      } else if (path.extname(fileName) === ".js") {
+        controllerName = path.join(parentDir, path.basename(fileName, path.extname(fileName)));
+        return configureFile(options, parentApp, controllerName);
       }
     });
+  };
+
+  configureFile = function(options, parentApp, controllerName) {
+    var $mvcConfig, app, controller, engine, func, itemMethod, itemMiddleware, method, methodInfo, methodName, pathOverrideByConfig, viewEngine, _i, _j, _len, _len1, _ref, _ref1, _ref2, _ref3, _ref4;
+    controller = require(path.join(PROJECT_DIR, options.controllerPath, controllerName));
+    app = express();
+    $mvcConfig = controller.$mvcConfig;
+    if (options.viewPath) {
+      engine = options.defaultEngine;
+      if (typeof $mvcConfig !== "undefined" && $mvcConfig.engine) {
+        engine = $mvcConfig.engine;
+      }
+      viewEngine = (typeof $mvcConfig !== "undefined" && $mvcConfig.viewEngine ? $mvcConfig.viewEngine : void 0) || options.defaultViewEngine;
+      app.engine("html", cons[engine]);
+      app.set("view engine", viewEngine);
+      app.set("views", path.join(PROJECT_DIR, options.viewPath, controllerName));
+    }
+    for (methodName in controller) {
+      method = controller[methodName];
+      if (methodName[0] === "$") {
+        continue;
+      }
+      methodInfo = resolveMethod(methodName);
+      setOptions(methodInfo, $mvcConfig != null ? (_ref = $mvcConfig.route) != null ? _ref[methodInfo.action] : void 0 : void 0, true);
+      if ($mvcConfig != null ? (_ref1 = $mvcConfig.route) != null ? (_ref2 = _ref1[methodInfo.action]) != null ? _ref2.path : void 0 : void 0 : void 0) {
+        pathOverrideByConfig = true;
+      }
+      if (!methodInfo.path) {
+        methodInfo.path = "/" + controllerName + "/" + methodInfo.action;
+      }
+      if (methodInfo.middleware) {
+        _ref3 = methodInfo.middleware;
+        for (_i = 0, _len = _ref3.length; _i < _len; _i++) {
+          itemMiddleware = _ref3[_i];
+          func = controller[itemMiddleware] || options.filter[itemMiddleware];
+          if (typeof func === "function") {
+            if (controllerName === "home") {
+              configRoute(app, "all", "/", func);
+            }
+            if (methodInfo.action === "index") {
+              configRoute(app, "all", "/" + controllerName, func);
+            }
+            configRoute(app, "all", methodInfo.path, func);
+          } else {
+            throw new Error("can not find filter", itemMiddleware);
+          }
+        }
+      }
+      _ref4 = methodInfo.httpVerbs;
+      for (_j = 0, _len1 = _ref4.length; _j < _len1; _j++) {
+        itemMethod = _ref4[_j];
+        if (!pathOverrideByConfig) {
+          if (controllerName === "home") {
+            configRoute(app, itemMethod, "/", method);
+          }
+          if (methodInfo.action === "index") {
+            configRoute(app, itemMethod, "/" + controllerName, method);
+          }
+        }
+        configRoute(app, itemMethod, methodInfo.path, method);
+      }
+    }
+    return parentApp.use(app);
   };
 
 
