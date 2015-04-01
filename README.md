@@ -8,6 +8,8 @@ simple-mvc is a light mvc framework based on express.
 
 `npm install simple-mvc`
 
+*Do not* install with `-g`!
+
 ##Useage
 
 ###config
