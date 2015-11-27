@@ -12,7 +12,9 @@ app.use express.urlencoded()
 app.use express.methodOverride()
 app.use app.router
 
-require('simple-mvc')(app)
+require('../lib')({
+	resolve: __dirname
+}, app)
 
 app.use "/api", (err, req, res, next)->
 	res.send "错误"

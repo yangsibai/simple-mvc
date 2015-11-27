@@ -8,7 +8,7 @@ express = require "express"
 path = require "path"
 cons = require "consolidate"
 
-PROJECT_DIR = path.join(__dirname, "../../")
+PROJECT_DIR = ''
 
 ###
     配置路由
@@ -16,12 +16,11 @@ PROJECT_DIR = path.join(__dirname, "../../")
     @param {String} [options.controllerPath="controller"] controller path
     @pram {String} [options.viewPath="views"] views path
     @param {Object} [options.filter=null] filter
+    @param {String} options.resolve resolve path
     @param parentApp app
 ###
 module.exports = (options, parentApp) ->
-    unless parentApp
-        parentApp = options
-        options = {}
+    PROJECT_DIR = options.resolve
 
     setOptions options,
         controllerPath: "controllers"
