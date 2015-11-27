@@ -8,14 +8,12 @@ simple-mvc is a light mvc framework based on express.
 
 `npm install simple-mvc`
 
-*Do not* install with `-g`!
-
 ##Useage
 
-###config
+###Get started
 
 1. app=express()
-2. require('simple-mvc')(app)
+2. require('simple-mvc')({resolve: __dirname}, app)
 3. done!
 
 ###project structure
