@@ -1,7 +1,7 @@
 {
   "name": "simple-mvc",
   "description": "a simple mvc framework based on express",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "author": {
     "name": "massimo",
     "email": "yangsibai@gmail.com"
@@ -22,7 +22,7 @@
     "app",
     "api"
   ],
-  "license": "GPL",
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/yangsibai/simple-mvc/issues"
   },

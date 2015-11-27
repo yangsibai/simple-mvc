@@ -162,3 +162,7 @@ Add `$mvcConfig` in controller can custom route:
             post:post
         });
     };
+
+###License
+
+MIT
